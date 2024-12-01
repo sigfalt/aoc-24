@@ -64,21 +64,28 @@ const TEST: &str = "\
 fn main() -> Result<()> {
 	start_day(DAY);
 
-	//region Part 1
 	println!("=== Part 1 ===");
 	let input_file = fs::read_to_string(INPUT_FILE)?;
-
-	assert_eq!(11, part1(TEST)?);
-
 	let result = time_snippet!(part1(input_file.as_str())?);
 	println!("Result = {}", result);
 
 	println!("\n=== Part 2 ===");
-
-	assert_eq!(31, part2(TEST)?);
-
 	let result = time_snippet!(part2(input_file.as_str())?);
 	println!("Result = {}", result);
+
+	Ok(())
+}
+
+#[test]
+fn test_part_one() -> Result<()> {
+	assert_eq!(11, part1(TEST)?);
+
+	Ok(())
+}
+
+#[test]
+fn test_part_two() -> Result<()> {
+	assert_eq!(31, part2(TEST)?);
 
 	Ok(())
 }
