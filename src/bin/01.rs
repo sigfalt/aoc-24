@@ -2,7 +2,6 @@ use std::cmp::{max, min};
 use std::collections::HashMap;
 use std::fs;
 use anyhow::*;
-use code_timing_macros::time_snippet;
 use const_format::concatcp;
 use nom::character::complete::{digit1, line_ending, space1};
 use nom::combinator::{all_consuming, map_res};
@@ -56,13 +55,15 @@ const INPUT_FILE: &str = concatcp!("input/", DAY, ".txt");
 fn main() -> Result<()> {
 	start_day(DAY);
 
-	println!("=== Part 1 ===");
 	let input_file = fs::read_to_string(INPUT_FILE)?;
-	let result = time_snippet!(part1(input_file.as_str())?);
+	let input = input_file.as_str();
+
+	println!("=== Part 1 ===");
+	let result = part1(input)?;
 	println!("Result = {}", result);
 
 	println!("\n=== Part 2 ===");
-	let result = time_snippet!(part2(input_file.as_str())?);
+	let result = part2(input)?;
 	println!("Result = {}", result);
 
 	Ok(())

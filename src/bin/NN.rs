@@ -1,6 +1,5 @@
 use std::fs;
 use anyhow::*;
-use code_timing_macros::time_snippet;
 use const_format::concatcp;
 use adv_code_2024::*;
 
@@ -21,14 +20,15 @@ const INPUT_FILE: &str = concatcp!("input/", DAY, ".txt");
 fn main() -> Result<()> {
     start_day(DAY);
 
-    println!("=== Part 1 ===");
     let input_file = fs::read_to_string(INPUT_FILE)?;
     let input = input_file.as_str();
-    let result = time_snippet!(part1(input)?);
+
+    println!("=== Part 1 ===");
+    let result = part1(input)?;
     println!("Result = {}", result);
 
     // println!("\n=== Part 2 ===");
-    // let result = time_snippet!(part2(input_file.as_str())?);
+    // let result = part2(input)?;
     // println!("Result = {}", result);
 
     Ok(())

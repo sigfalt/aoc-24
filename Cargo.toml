@@ -5,7 +5,6 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.93"
-code-timing-macros = { version = "0.0.5", features = ["release"] }
 const_format = "0.2.33"
 nom = "7.1"
 
