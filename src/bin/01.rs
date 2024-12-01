@@ -1,4 +1,5 @@
 use std::cmp::{max, min};
+use std::collections::HashMap;
 use std::fs;
 use anyhow::*;
 use code_timing_macros::time_snippet;
@@ -33,10 +34,18 @@ fn part1(input: &str) -> Result<u64> {
 	right.sort();
 
 	Ok(left.into_iter().zip(right).map(|(a, b)| max(a, b) - min(a, b)).sum())
-
-	// Ok(11)
 }
 
+fn part2(input: &str) -> Result<u64> {
+	let parsed = parse(input);
+	let (left, right): (Vec<_>, Vec<_>) = parsed.into_iter().unzip();
+
+	let mut count_map = HashMap::new();
+	right.into_iter().for_each(|val| {
+		count_map.entry(val).and_modify(|cnt| *cnt += 1).or_insert(1u64);
+	});
+	Ok(left.into_iter().map(|val| val * count_map.get(&val).unwrap_or(&0)).sum())
+}
 
 
 // framework junk
@@ -57,27 +66,19 @@ fn main() -> Result<()> {
 
 	//region Part 1
 	println!("=== Part 1 ===");
+	let input_file = fs::read_to_string(INPUT_FILE)?;
 
 	assert_eq!(11, part1(TEST)?);
 
-	let input_file = fs::read_to_string(INPUT_FILE)?;
 	let result = time_snippet!(part1(input_file.as_str())?);
 	println!("Result = {}", result);
-	//endregion
 
-	//region Part 2
-	// println!("\n=== Part 2 ===");
-	//
-	// fn part2<R: BufRead>(reader: R) -> Result<usize> {
-	//     Ok(0)
-	// }
-	//
-	// assert_eq!(0, part2(BufReader::new(TEST.as_bytes()))?);
-	//
-	// let input_file = BufReader::new(File::open(INPUT_FILE)?);
-	// let result = time_snippet!(part2(input_file)?);
-	// println!("Result = {}", result);
-	//endregion
+	println!("\n=== Part 2 ===");
+
+	assert_eq!(31, part2(TEST)?);
+
+	let result = time_snippet!(part2(input_file.as_str())?);
+	println!("Result = {}", result);
 
 	Ok(())
 }
