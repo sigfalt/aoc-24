@@ -1,5 +1,5 @@
 use anyhow::*;
-use adv_code_2024::*;
+use aoc_24::*;
 
 fn part1(input: &str) -> Result<usize> {
     // TODO: Solve Part 1 of the puzzle
@@ -10,23 +10,6 @@ fn part1(input: &str) -> Result<usize> {
 fn part2(input: &str) -> Result<usize> {
     let _ = input;
     Ok(0)
-}
-
-const DAY: &str = "NN"; // TODO: Fill the day
-
-fn main() -> Result<()> {
-    let input_file = start_day(DAY)?;
-    let input = input_file.as_str();
-
-    println!("=== Part 1 ===");
-    let result = part1(input)?;
-    println!("Result = {}", result);
-
-    // println!("\n=== Part 2 ===");
-    // let result = part2(input)?;
-    // println!("Result = {}", result);
-
-    Ok(())
 }
 
 #[cfg(test)]

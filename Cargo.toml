@@ -1,13 +1,20 @@
 [package]
-name = "adv-code-2024"
+name = "aoc-24"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+ahash = "0.8"
 anyhow = "1.0.93"
-const_format = "0.2.33"
 nom = "7.1"
 
 # Additional recommended dependencies
 itertools = "0.13.0"
 regex = "1.11.1"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "bench01"
+harness = false
