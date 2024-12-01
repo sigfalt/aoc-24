@@ -18,14 +18,13 @@ fn part2(input: &str) -> Result<usize> {
 const DAY: &str = "NN"; // TODO: Fill the day
 const INPUT_FILE: &str = concatcp!("input/", DAY, ".txt");
 
-const TEST: &str = "<TEST-INPUT>"; // TODO: Add the test input
-
 fn main() -> Result<()> {
     start_day(DAY);
 
     println!("=== Part 1 ===");
     let input_file = fs::read_to_string(INPUT_FILE)?;
-    let result = time_snippet!(part1(input_file.as_str())?);
+    let input = input_file.as_str();
+    let result = time_snippet!(part1(input)?);
     println!("Result = {}", result);
 
     // println!("\n=== Part 2 ===");
@@ -35,16 +34,21 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-#[test]
-fn test_part_one() -> Result<()> {
-    assert_eq!(0, part1(TEST)?);
+#[cfg(test)]
+mod tests {
+    use crate::*;
 
-    Ok(())
-}
+    const TEST: &str = "<TEST-INPUT>"; // TODO: Add the test input
 
-#[test]
-fn test_part_two() -> Result<()> {
-    assert_eq!(0, part2(TEST)?);
+    #[test]
+    fn test_part_one() -> Result<()> {
+        assert_eq!(0, part1(TEST)?);
+        Ok(())
+    }
 
-    Ok(())
+    #[test]
+    fn test_part_two() -> Result<()> {
+        assert_eq!(0, part2(TEST)?);
+        Ok(())
+    }
 }

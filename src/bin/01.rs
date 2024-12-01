@@ -53,14 +53,6 @@ fn part2(input: &str) -> Result<u64> {
 const DAY: &str = "01";
 const INPUT_FILE: &str = concatcp!("input/", DAY, ".txt");
 
-const TEST: &str = "\
-3   4
-4   3
-2   5
-1   3
-3   9
-3   3";
-
 fn main() -> Result<()> {
 	start_day(DAY);
 
@@ -76,16 +68,29 @@ fn main() -> Result<()> {
 	Ok(())
 }
 
-#[test]
-fn test_part_one() -> Result<()> {
-	assert_eq!(11, part1(TEST)?);
+#[cfg(test)]
+mod tests {
+	use crate::*;
 
-	Ok(())
-}
+	const TEST: &str = "\
+3   4
+4   3
+2   5
+1   3
+3   9
+3   3";
 
-#[test]
-fn test_part_two() -> Result<()> {
-	assert_eq!(31, part2(TEST)?);
+	#[test]
+	fn test_part_one() -> Result<()> {
+		assert_eq!(11, part1(TEST)?);
 
-	Ok(())
+		Ok(())
+	}
+
+	#[test]
+	fn test_part_two() -> Result<()> {
+		assert_eq!(31, part2(TEST)?);
+
+		Ok(())
+	}
 }
