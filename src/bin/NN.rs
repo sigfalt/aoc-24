@@ -1,6 +1,4 @@
-use std::fs;
 use anyhow::*;
-use const_format::concatcp;
 use adv_code_2024::*;
 
 fn part1(input: &str) -> Result<usize> {
@@ -15,12 +13,9 @@ fn part2(input: &str) -> Result<usize> {
 }
 
 const DAY: &str = "NN"; // TODO: Fill the day
-const INPUT_FILE: &str = concatcp!("input/", DAY, ".txt");
 
 fn main() -> Result<()> {
-    start_day(DAY);
-
-    let input_file = fs::read_to_string(INPUT_FILE)?;
+    let input_file = start_day(DAY)?;
     let input = input_file.as_str();
 
     println!("=== Part 1 ===");

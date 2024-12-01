@@ -1,5 +1,10 @@
-pub fn start_day(day: &str) {
+use std::fs;
+use anyhow::*;
+
+pub fn start_day(day: &str) -> Result<String> {
     println!("Advent of Code 2024 - Day {:0>2}", day);
+
+    Ok(fs::read_to_string(format!("input/{}.txt", day))?)
 }
 
 // Additional common functions
@@ -10,6 +15,6 @@ mod tests {
 
     #[test]
     fn it_works() {
-        start_day("00");
+        let _ = start_day("00");
     }
 }

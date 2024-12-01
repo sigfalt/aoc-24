@@ -1,8 +1,6 @@
 use std::cmp::{max, min};
 use std::collections::HashMap;
-use std::fs;
 use anyhow::*;
-use const_format::concatcp;
 use nom::character::complete::{digit1, line_ending, space1};
 use nom::combinator::{all_consuming, map_res};
 use nom::{IResult};
@@ -50,12 +48,9 @@ fn part2(input: &str) -> Result<u64> {
 // framework junk
 
 const DAY: &str = "01";
-const INPUT_FILE: &str = concatcp!("input/", DAY, ".txt");
 
 fn main() -> Result<()> {
-	start_day(DAY);
-
-	let input_file = fs::read_to_string(INPUT_FILE)?;
+	let input_file = start_day(DAY)?;
 	let input = input_file.as_str();
 
 	println!("=== Part 1 ===");
