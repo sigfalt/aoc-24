@@ -1,20 +1,20 @@
 use anyhow::*;
 use aoc_24::*;
 
-fn part1(input: &str) -> Result<usize> {
+pub fn part1(input: &str) -> Result<usize> {
     // TODO: Solve Part 1 of the puzzle
     let _ = input;
     Ok(0)
 }
 
-fn part2(input: &str) -> Result<usize> {
+pub fn part2(input: &str) -> Result<usize> {
     let _ = input;
     Ok(0)
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::*;
+    use crate::dayNN::*;
 
     const TEST: &str = "<TEST-INPUT>"; // TODO: Add the test input
 
