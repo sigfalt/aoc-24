@@ -59,6 +59,7 @@ impl PreviousLevel {
 
 pub fn part1(input: &str) -> Result<u64> {
     let reports = parse(input);
+
     let safe = reports.into_iter().fold(0, |cnt, report| {
         let x = report
             .into_iter()
@@ -95,9 +96,98 @@ pub fn part1(input: &str) -> Result<u64> {
     Ok(safe)
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum ReactorStatus {
+    Safe,
+    Tolerable,
+    Unsafe,
+}
+
+impl ReactorStatus {
+    pub fn is_safe(&self) -> bool {
+        self != &ReactorStatus::Unsafe
+    }
+}
+
+fn process_report(report: &[u64]) -> ReactorStatus {
+    fn calc_level_diff(prev_level: u64, next_level: u64) -> (LevelDirection, u64) {
+        match next_level.cmp(&prev_level) {
+            Ordering::Less => (LevelDirection::Decreasing, prev_level - next_level),
+            Ordering::Equal => (LevelDirection::Unchanged, 0),
+            Ordering::Greater => (LevelDirection::Increasing, next_level - prev_level),
+        }
+    }
+
+    fn process_report_rec(prev_level: Option<u64>, dir: LevelDirection, reports_to_process: &[u64], status: ReactorStatus) -> ReactorStatus {
+        if status == ReactorStatus::Unsafe {
+            // nothing can ever bring a reactor back from Unsafe
+            return ReactorStatus::Unsafe;
+        }
+        if dir == LevelDirection::Unchanged {
+            // an unchanging level means an Unsafe reactor
+            return ReactorStatus::Unsafe;
+        }
+
+        let (&level, remaining_reports) = match reports_to_process.split_first() {
+            Some(v) => v,
+            // split_first() returns None when reports_to_process is empty, return current status
+            None => return status,
+        };
+
+        // process assuming the current level will be executed
+
+        // get previous level and level direction
+        let recurse = if let Some(prev_level) = prev_level {
+            if dir != LevelDirection::Unknown {
+                let (new_dir, value_delta) = calc_level_diff(prev_level, level);
+                if dir != new_dir || value_delta > 3 {
+                    // if we include this value, then...
+                    ReactorStatus::Unsafe
+                } else {
+                    process_report_rec(Some(level), new_dir, remaining_reports, status)
+                }
+            } else {
+                // no level direction yet, we are the second level
+                // only check level difference
+                let (starting_dir, value_delta) = calc_level_diff(prev_level, level);
+                if value_delta == 0 || value_delta > 3 {
+                    // if we include this value, then...
+                    ReactorStatus::Unsafe
+                } else {
+                    process_report_rec(Some(level), starting_dir, remaining_reports, status)
+                }
+            }
+        } else {
+            // no previous level means this is the first level
+            process_report_rec(Some(level), dir, remaining_reports, status)
+        };
+
+        // if we haven't utilized the Problem Dampener yet and executing this step led to the reactor becoming unsafe...
+        if status == ReactorStatus::Safe && recurse == ReactorStatus::Unsafe {
+            // then utilize the Problem Dampener to skip this level reading
+            // nothing else we can do if skipping this step doesn't make the reactor safer
+            process_report_rec(prev_level, dir, remaining_reports, ReactorStatus::Tolerable)
+        } else {
+            recurse
+        }
+    }
+
+    process_report_rec(None, LevelDirection::Unknown, report, ReactorStatus::Safe)
+}
+
 pub fn part2(input: &str) -> Result<u64> {
-    let _ = input;
-    Ok(0)
+    let reports = parse(input);
+
+    let safe = reports.into_iter().fold(0, |cnt, report| {
+        let status = process_report(&report);
+        if status.is_safe() {
+            cnt + 1
+        } else {
+            cnt
+        }
+    });
+
+    Ok(safe)
 }
 
 #[cfg(test)]
@@ -119,7 +209,7 @@ mod tests {
 
     #[test]
     fn test_part_two() -> Result<()> {
-        assert_eq!(0, part2(TEST)?);
+        assert_eq!(4, part2(TEST)?);
         Ok(())
     }
 }
