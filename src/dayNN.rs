@@ -1,5 +1,4 @@
 use anyhow::*;
-use aoc_24::*;
 
 pub fn part1(input: &str) -> Result<usize> {
     // TODO: Solve Part 1 of the puzzle
