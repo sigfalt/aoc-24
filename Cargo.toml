@@ -9,8 +9,9 @@ anyhow = "1.0.93"
 nom = "7.1"
 
 # Additional recommended dependencies
-itertools = "0.13.0"
-regex = "1.11.1"
+grid = "0.15"
+itertools = "0.13"
+regex = "1.11"
 
 [dev-dependencies]
 criterion = "0.5"

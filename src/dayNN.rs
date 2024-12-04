@@ -1,12 +1,12 @@
 use anyhow::*;
 
-pub fn part1(input: &str) -> Result<usize> {
+pub fn part1(input: &str) -> Result<u64> {
     // TODO: Solve Part 1 of the puzzle
     let _ = input;
     Ok(0)
 }
 
-pub fn part2(input: &str) -> Result<usize> {
+pub fn part2(input: &str) -> Result<u64> {
     let _ = input;
     Ok(0)
 }
