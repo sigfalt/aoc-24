@@ -15,7 +15,7 @@ enum MapCell {
     Guard(Direction),
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 enum Direction {
     North,
     East,
@@ -103,8 +103,61 @@ pub fn part1(input: &str) -> Result<u64> {
 }
 
 pub fn part2(input: &str) -> Result<u64> {
-    let _ = input;
-    Ok(0)
+    let map = parse(input);
+
+    let (mut guard_position, mut guard_direction) = map.indexed_iter().find_map(|((x, y), &cell)| {
+        if let MapCell::Guard(dir) = cell {
+            Some(((isize::try_from(x).unwrap(), isize::try_from(y).unwrap()), dir))
+        } else {
+            None
+        }
+    }).unwrap();
+
+    let mut looping_positions = 0;
+    let mut added_obstacle_positions = AHashSet::new();
+    fn detect_loop(map: Grid<MapCell>, mut curr_pos: (isize, isize), mut curr_dir: Direction) -> bool {
+        let (mut next_row, mut next_col) = curr_dir.offset_from(curr_pos).unwrap();
+        let mut visited_states = AHashSet::new();
+        visited_states.insert((curr_pos, curr_dir));
+
+        while let Some(&next_cell) = map.get(next_row, next_col) {
+            // don't ever move or clear original guard cell, so only check obstacle vs non-obstacle
+            if next_cell == MapCell::Obstacle {
+                curr_dir = curr_dir.rotate();
+            } else {
+                curr_pos = (next_row, next_col);
+            }
+
+            let looping = !visited_states.insert((curr_pos, curr_dir));
+            if looping { return true; }
+
+            (next_row, next_col) = curr_dir.offset_from(curr_pos).unwrap();
+        }
+        false
+    }
+
+    let (mut next_row, mut next_col) = guard_direction.offset_from(guard_position).unwrap();
+    while let Some(&next_cell) = map.get(next_row, next_col) {
+        // don't ever move or clear original guard cell, so only check obstacle vs non-obstacle
+        if next_cell == MapCell::Obstacle {
+            guard_direction = guard_direction.rotate();
+        } else {
+            // if the next cell is empty, and we haven't tried putting an obstacle there yet, try that
+            if !added_obstacle_positions.contains(&(next_row, next_col)) && next_cell == MapCell::Empty {
+                added_obstacle_positions.insert((next_row, next_col));
+                let mut modified_map = map.clone();
+                *modified_map.get_mut(next_row, next_col).unwrap() = MapCell::Obstacle;
+                if detect_loop(modified_map, guard_position, guard_direction) {
+                    looping_positions += 1;
+                }
+            }
+            guard_position = (next_row, next_col);
+        }
+
+        (next_row, next_col) = guard_direction.offset_from(guard_position).unwrap();
+    }
+
+    Ok(looping_positions)
 }
 
 #[cfg(test)]
@@ -130,7 +183,7 @@ mod tests {
 
     #[test]
     fn test_part_two() -> Result<()> {
-        assert_eq!(0, part2(TEST)?);
+        assert_eq!(6, part2(TEST)?);
         Ok(())
     }
 }
