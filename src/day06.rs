@@ -115,9 +115,8 @@ pub fn part2(input: &str) -> Result<u64> {
 
     let mut looping_positions = 0;
     let mut added_obstacle_positions = AHashSet::new();
-    fn detect_loop(map: Grid<MapCell>, mut curr_pos: (isize, isize), mut curr_dir: Direction) -> bool {
+    fn detect_loop(map: Grid<MapCell>, mut curr_pos: (isize, isize), mut curr_dir: Direction, mut visited_states: AHashSet<((isize, isize), Direction)>) -> bool {
         let (mut next_row, mut next_col) = curr_dir.offset_from(curr_pos).unwrap();
-        let mut visited_states = AHashSet::new();
         visited_states.insert((curr_pos, curr_dir));
 
         while let Some(&next_cell) = map.get(next_row, next_col) {
@@ -136,6 +135,8 @@ pub fn part2(input: &str) -> Result<u64> {
         false
     }
 
+    let mut visited_states = AHashSet::new();
+    visited_states.insert((guard_position, guard_direction));
     let (mut next_row, mut next_col) = guard_direction.offset_from(guard_position).unwrap();
     while let Some(&next_cell) = map.get(next_row, next_col) {
         // don't ever move or clear original guard cell, so only check obstacle vs non-obstacle
@@ -147,12 +148,13 @@ pub fn part2(input: &str) -> Result<u64> {
                 added_obstacle_positions.insert((next_row, next_col));
                 let mut modified_map = map.clone();
                 *modified_map.get_mut(next_row, next_col).unwrap() = MapCell::Obstacle;
-                if detect_loop(modified_map, guard_position, guard_direction) {
+                if detect_loop(modified_map, guard_position, guard_direction, visited_states.clone()) {
                     looping_positions += 1;
                 }
             }
             guard_position = (next_row, next_col);
         }
+        visited_states.insert((guard_position, guard_direction));
 
         (next_row, next_col) = guard_direction.offset_from(guard_position).unwrap();
     }
