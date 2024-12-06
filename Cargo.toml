@@ -4,11 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-ahash = "0.8"
 anyhow = "1.0.93"
 nom = "7.1"
 
 # Additional recommended dependencies
+ahash = "0.8"
 grid = "0.15"
 itertools = "0.13"
 regex = "1.11"
@@ -30,4 +30,8 @@ harness = false
 
 [[bench]]
 name = "bench04"
+harness = false
+
+[[bench]]
+name = "bench05"
 harness = false
