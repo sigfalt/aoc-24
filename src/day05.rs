@@ -93,8 +93,52 @@ pub fn part1(input: &str) -> Result<u64> {
 }
 
 pub fn part2(input: &str) -> Result<u64> {
-    let _ = input;
-    Ok(0)
+    let (page_orders, printed_updates) = parse(input);
+
+    let mut valid_orders = BTreeMap::new();
+    let mut invalid_orders = BTreeMap::new();
+    page_orders.into_iter().for_each(|page_order| {
+        valid_orders.entry(page_order.first)
+            .or_insert(BTreeSet::new())
+            .insert(page_order.second);
+
+        let invalid_order = page_order.invert();
+        invalid_orders.entry(invalid_order.first)
+            .or_insert(BTreeSet::new())
+            .insert(invalid_order.second);
+    });
+
+    let result = printed_updates.into_iter().filter_map(|update_list| {
+        let mut invalid_watchlist = BTreeSet::new();
+        let invalid_update_list = update_list.iter().fold(false, |mut invalid_order, updated_page| {
+            if invalid_watchlist.contains(updated_page) {
+                invalid_order = true;
+            }
+            if let Some(new_invalid_pages) = invalid_orders.get(updated_page) {
+                invalid_watchlist.append(&mut new_invalid_pages.clone());
+            }
+
+            invalid_order
+        });
+
+        if invalid_update_list {
+            let mut list_priority = BTreeMap::new();
+            let update_set = BTreeSet::from_iter(update_list);
+            update_set.iter().for_each(|&updated_page| {
+                let count = valid_orders.get(&updated_page).map(|valid_updates|
+                    update_set.intersection(valid_updates).count()
+                ).unwrap_or(0);
+                list_priority.insert(count, updated_page);
+            });
+
+            let len = list_priority.len();
+            Some(list_priority[&((len - 1) / 2)])
+        } else {
+            None
+        }
+    }).sum();
+
+    Ok(result)
 }
 
 #[cfg(test)]
@@ -138,7 +182,7 @@ mod tests {
 
     #[test]
     fn test_part_two() -> Result<()> {
-        assert_eq!(0, part2(TEST)?);
+        assert_eq!(123, part2(TEST)?);
         Ok(())
     }
 }
