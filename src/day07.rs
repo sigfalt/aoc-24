@@ -72,41 +72,24 @@ pub fn part1(input: &str) -> Result<u64> {
     Ok(result)
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum OperatorPartTwo {
-    Addition,
-    Multiplication,
-    Concatenation
-}
-impl OperatorPartTwo {
-    pub const fn values() -> [OperatorPartTwo; 3] {
-        [
-            OperatorPartTwo::Addition,
-            OperatorPartTwo::Multiplication,
-            OperatorPartTwo::Concatenation,
-        ]
-    }
-}
-
 pub fn part2(input: &str) -> Result<u64> {
     let equations = parse(input);
 
-    let result = equations.into_iter().filter_map(|Equation { test_val, numbers }| {
-        let mut numbers = VecDeque::from_iter(numbers.clone());
-        let starting_value = numbers.pop_front().unwrap();
-        let numbers = numbers;
-        let found_good_operations = repeat_n(OperatorPartTwo::values().into_iter(), numbers.len()).multi_cartesian_product().into_iter().find(|operators| {
-            let total_value = operators.into_iter().zip_eq(numbers.clone()).fold(starting_value, |total, (op, next_val)| {
-                match op {
-                    OperatorPartTwo::Addition => total + next_val,
-                    OperatorPartTwo::Multiplication => total * next_val,
-                    OperatorPartTwo::Concatenation => total * 10u64.pow(next_val.ilog10() + 1) + next_val
-                }
-            });
-            total_value == test_val
-        });
+    fn process_operation_recursive(value: u64, numbers: &[u64], target: u64) -> bool {
+        if let Some((next_number, numbers)) = numbers.split_first() {
+            process_operation_recursive(value + next_number, numbers, target)
+                || process_operation_recursive(value * next_number, numbers, target)
+                || process_operation_recursive(value * 10u64.pow(next_number.ilog10() + 1) + next_number, numbers, target)
+        } else {
+            value == target
+        }
+    }
 
-        if let Some(_) = found_good_operations {
+    let result = equations.into_iter().filter_map(|Equation { test_val, numbers }| {
+        let (&starting_value, numbers) = numbers.as_slice().split_first().unwrap();
+        let found_good_operations = process_operation_recursive(starting_value, numbers, test_val);
+
+        if found_good_operations {
             Some(test_val)
         } else {
             None
