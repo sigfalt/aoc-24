@@ -1,3 +1,4 @@
+use std::iter::successors;
 use ahash::{AHashMap, AHashSet};
 use anyhow::*;
 use grid::Grid;
@@ -56,10 +57,10 @@ pub fn part1(input: &str) -> Result<u64> {
     let frequency_coordinate_map = frequency_coordinate_map;
 
     let mut antinode_coords = AHashSet::new();
-    frequency_coordinate_map.iter().for_each(|(_frequency, coordinate_list)| {
-        coordinate_list.iter().combinations(2).for_each(|x| {
-            let (&&(first_row, first_col), _) = x.split_first().unwrap();
-            let (&&(second_row, second_col), _) = x.split_last().unwrap();
+    frequency_coordinate_map.into_iter().for_each(|(_frequency, coordinate_list)| {
+        coordinate_list.into_iter().combinations(2).for_each(|x| {
+            let (&(first_row, first_col), _) = x.split_first().unwrap();
+            let (&(second_row, second_col), _) = x.split_last().unwrap();
             let (first_row, first_col) = (isize::try_from(first_row).unwrap(), isize::try_from(first_col).unwrap());
             let (second_row, second_col) = (isize::try_from(second_row).unwrap(), isize::try_from(second_col).unwrap());
             let (first_antinode_row, first_antinode_col) = ((first_row - second_row) + first_row, (first_col - second_col) + first_col);
@@ -77,8 +78,41 @@ pub fn part1(input: &str) -> Result<u64> {
 }
 
 pub fn part2(input: &str) -> Result<u64> {
-    let _ = input;
-    Ok(0)
+    let map: Grid<_> = parse(input).into();
+
+    let mut frequency_coordinate_map = AHashMap::new();
+    map.indexed_iter().for_each(|(coords, &cell)| {
+        if let MapCell::Antenna { frequency } = cell {
+            frequency_coordinate_map.entry(frequency)
+                .or_insert(Vec::new())
+                .push(coords);
+        }
+    });
+    let frequency_coordinate_map = frequency_coordinate_map;
+
+    let mut antinode_coords = AHashSet::new();
+    frequency_coordinate_map.into_iter().for_each(|(_frequency, coordinate_list)| {
+        coordinate_list.into_iter().combinations(2).for_each(|x| {
+            let (&(first_row, first_col), _) = x.split_first().unwrap();
+            let (&(second_row, second_col), _) = x.split_last().unwrap();
+            let (first_row, first_col) = (isize::try_from(first_row).unwrap(), isize::try_from(first_col).unwrap());
+            let (second_row, second_col) = (isize::try_from(second_row).unwrap(), isize::try_from(second_col).unwrap());
+            let (first_row_delta, first_col_delta) = (first_row - second_row, first_col - second_col);
+            let (second_row_delta, second_col_delta) = (second_row - first_row, second_col - first_col);
+            let first_antinode_iter = successors(Some((first_row, first_col)), |&(row, col)| {
+                Some((row + first_row_delta, col + first_col_delta))
+            });
+            let second_antinode_iter = successors(Some((second_row, second_col)), |&(row, col)| {
+                Some((row + second_row_delta, col + second_col_delta))
+            });
+            first_antinode_iter.take_while(|&(row, col)| map.get(row, col).is_some())
+                .for_each(|antinode| { antinode_coords.insert(antinode); });
+            second_antinode_iter.take_while(|&(row, col)| map.get(row, col).is_some())
+                .for_each(|antinode| { antinode_coords.insert(antinode); });
+        })
+    });
+
+    Ok(antinode_coords.len() as u64)
 }
 
 #[cfg(test)]
@@ -106,7 +140,7 @@ mod tests {
 
     #[test]
     fn test_part_two() -> Result<()> {
-        assert_eq!(0, part2(TEST)?);
+        assert_eq!(34, part2(TEST)?);
         Ok(())
     }
 }

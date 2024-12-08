@@ -12,5 +12,9 @@ pub fn main() -> Result<()> {
 	let result = part1(input)?;
 	println!("Result = {}", result);
 
+	println!("\n=== Part 2 ===");
+	let result = part2(input)?;
+	println!("Result = {}", result);
+
 	Ok(())
 }
