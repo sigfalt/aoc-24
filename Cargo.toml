@@ -11,7 +11,6 @@ nom = "7.1"
 ahash = "0.8"
 grid = "0.15"
 itertools = "0.13"
-regex = "1.11"
 
 [dev-dependencies]
 criterion = "0.5"

@@ -9,21 +9,10 @@ pub mod day05;
 pub mod day06;
 pub mod day07;
 pub mod day08;
+pub mod day09;
 
 pub fn start_day(day: &str) -> Result<String> {
     println!("Advent of Code 2024 - Day {:0>2}", day);
 
     Ok(fs::read_to_string(format!("input/{}.txt", day))?)
-}
-
-// Additional common functions
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let _ = start_day("00");
-    }
 }

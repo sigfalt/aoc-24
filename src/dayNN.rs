@@ -1,4 +1,5 @@
 use anyhow::*;
+use itertools::Itertools;
 
 pub fn part1(input: &str) -> Result<u64> {
     // TODO: Solve Part 1 of the puzzle
