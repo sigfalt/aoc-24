@@ -70,4 +70,40 @@ mod tests {
         Ok(())
     }
 
+    #[test]
+    fn test_one_blink() -> Result<()> {
+        assert_eq!(3, count_rocks(parse(TEST), 1));
+        Ok(())
+    }
+
+    #[test]
+    fn test_two_blinks() -> Result<()> {
+        assert_eq!(4, count_rocks(parse(TEST), 2));
+        Ok(())
+    }
+
+    #[test]
+    fn test_three_blinks() -> Result<()> {
+        assert_eq!(5, count_rocks(parse(TEST), 3));
+        Ok(())
+    }
+
+    #[test]
+    fn test_four_blinks() -> Result<()> {
+        assert_eq!(9, count_rocks(parse(TEST), 4));
+        Ok(())
+    }
+
+    #[test]
+    fn test_five_blinks() -> Result<()> {
+        assert_eq!(13, count_rocks(parse(TEST), 5));
+        Ok(())
+    }
+
+    #[test]
+    fn test_six_blinks() -> Result<()> {
+        assert_eq!(22, count_rocks(parse(TEST), 6));
+        Ok(())
+    }
+
 }
