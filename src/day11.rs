@@ -1,6 +1,5 @@
 use ahash::AHashMap;
 use anyhow::*;
-use itertools::Itertools;
 use nom::character::complete::{char, digit1};
 use nom::combinator::{all_consuming, map_res};
 use nom::{Finish, IResult};
@@ -15,34 +14,15 @@ fn parse(input: &str) -> Vec<u64> {
     result
 }
 
-fn blink(rocks: Vec<u64>) -> impl Iterator<Item = u64> {
-    rocks.into_iter().flat_map(|rock| {
-        if rock == 0 {
-            vec![1]
-        } else if (rock.ilog10() + 1) % 2 == 0 {
-            let num_digits = rock.ilog10() + 1;
-            let base = 10u64.pow(num_digits / 2);
-            vec![rock / base, rock % base]
-        } else {
-            vec![rock * 2024]
-        }
-    })
-}
-
 pub fn part1(input: &str) -> Result<u64> {
     let rocks = parse(input);
 
-    let rocks = (0..25).fold(rocks, |rocks , _| blink(rocks).collect_vec());
-
-    Ok(rocks.len() as u64)
+    Ok(count_rocks(rocks, 25))
 }
 
-pub fn part2(input: &str) -> Result<u64> {
-    let rocks = parse(input);
-    const MAX_AGE: u64 = 75;
-
+fn count_rocks(rocks: Vec<u64>, max_age: u64) -> u64 {
     let mut rock_age_count_cache = AHashMap::new();
-    let mut count_rocks = |rock: u64, depth: u64| -> u64 {
+    let mut map_rocks = |rock: u64, depth: u64| -> u64 {
         fn rec(rock: u64, depth: u64, rock_age_count_cache: &mut AHashMap<(u64, u64), u64>) -> u64 {
             if let Some(&count) = rock_age_count_cache.get(&(rock, depth)) {
                 return count;
@@ -69,8 +49,13 @@ pub fn part2(input: &str) -> Result<u64> {
         rec(rock, depth, &mut rock_age_count_cache)
     };
 
-    let rock_count = rocks.into_iter().map(|rock| count_rocks(rock, MAX_AGE)).sum();
-    Ok(rock_count)
+    rocks.into_iter().map(|rock| map_rocks(rock, max_age)).sum()
+}
+
+pub fn part2(input: &str) -> Result<u64> {
+    let rocks = parse(input);
+
+    Ok(count_rocks(rocks, 75))
 }
 
 #[cfg(test)]
