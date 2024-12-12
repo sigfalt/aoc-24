@@ -1,3 +1,4 @@
+use ahash::AHashMap;
 use anyhow::*;
 use itertools::Itertools;
 use nom::character::complete::{char, digit1};
@@ -37,8 +38,39 @@ pub fn part1(input: &str) -> Result<u64> {
 }
 
 pub fn part2(input: &str) -> Result<u64> {
-    let _ = input;
-    Ok(0)
+    let rocks = parse(input);
+    const MAX_AGE: u64 = 75;
+
+    let mut rock_age_count_cache = AHashMap::new();
+    let mut count_rocks = |rock: u64, depth: u64| -> u64 {
+        fn rec(rock: u64, depth: u64, rock_age_count_cache: &mut AHashMap<(u64, u64), u64>) -> u64 {
+            if let Some(&count) = rock_age_count_cache.get(&(rock, depth)) {
+                return count;
+            }
+
+            let count = if depth == 0 {
+                1
+            } else {
+                if rock == 0 {
+                    rec(1, depth - 1, rock_age_count_cache)
+                } else if (rock.ilog10() + 1) % 2 == 0 {
+                    let num_digits = rock.ilog10() + 1;
+                    let base = 10u64.pow(num_digits / 2);
+                    rec(rock / base, depth - 1, rock_age_count_cache)
+                        + rec(rock % base, depth - 1, rock_age_count_cache)
+                } else {
+                    rec(rock * 2024, depth - 1, rock_age_count_cache)
+                }
+            };
+            rock_age_count_cache.insert((rock, depth), count);
+
+            count
+        }
+        rec(rock, depth, &mut rock_age_count_cache)
+    };
+
+    let rock_count = rocks.into_iter().map(|rock| count_rocks(rock, MAX_AGE)).sum();
+    Ok(rock_count)
 }
 
 #[cfg(test)]
@@ -53,9 +85,4 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_part_two() -> Result<()> {
-        assert_eq!(0, part2(TEST)?);
-        Ok(())
-    }
 }
