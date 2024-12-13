@@ -138,7 +138,18 @@ pub fn part2(input: &str) -> Result<u64> {
 mod tests {
 	use crate::day12::*;
 
-	const TEST: &str = "RRRRIICCFF
+	const SMALL_TEST: &str = "AAAA
+BBCD
+BBCC
+EEEC";
+
+	const MEDIUM_TEST: &str = "OOOOO
+OXOXO
+OOOOO
+OXOXO
+OOOOO";
+	
+	const LARGE_TEST: &str = "RRRRIICCFF
 RRRRIICCCF
 VVRRRCCFFF
 VVRCCCJFFF
@@ -150,14 +161,61 @@ MIIISIJEEE
 MMMISSJEEE";
 
 	#[test]
-	fn test_part_one() -> Result<()> {
-		assert_eq!(1930, part1(TEST)?);
+	fn test_part_one_small() -> Result<()> {
+		assert_eq!(140, part1(SMALL_TEST)?);
 		Ok(())
 	}
 
 	#[test]
-	fn test_part_two() -> Result<()> {
-		assert_eq!(1206, part2(TEST)?);
+	fn test_part_one_medium() -> Result<()> {
+		assert_eq!(772, part1(MEDIUM_TEST)?);
+		Ok(())
+	}
+
+	#[test]
+	fn test_part_one_large() -> Result<()> {
+		assert_eq!(1930, part1(LARGE_TEST)?);
+		Ok(())
+	}
+
+
+
+	#[test]
+	fn test_part_two_small() -> Result<()> {
+		assert_eq!(80, part2(SMALL_TEST)?);
+		Ok(())
+	}
+
+	#[test]
+	fn test_part_two_medium() -> Result<()> {
+		assert_eq!(436, part2(MEDIUM_TEST)?);
+		Ok(())
+	}
+
+	#[test]
+	fn test_part_two_E() -> Result<()> {
+		assert_eq!(236, part2("EEEEE
+EXXXX
+EEEEE
+EXXXX
+EEEEE")?);
+		Ok(())
+	}
+
+	#[test]
+	fn test_part_two_mobius() -> Result<()> {
+		assert_eq!(368, part2("AAAAAA
+AAABBA
+AAABBA
+ABBAAA
+ABBAAA
+AAAAAA")?);
+		Ok(())
+	}
+
+	#[test]
+	fn test_part_two_large() -> Result<()> {
+		assert_eq!(1206, part2(LARGE_TEST)?);
 		Ok(())
 	}
 }
