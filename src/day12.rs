@@ -297,7 +297,7 @@ MMMISSJEEE";
 	}
 
 	#[test]
-	fn test_part_two_E() -> Result<()> {
+	fn test_part_two_e_shaped_region() -> Result<()> {
 		assert_eq!(236, part2("EEEEE
 EXXXX
 EEEEE
