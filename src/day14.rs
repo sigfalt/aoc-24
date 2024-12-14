@@ -1,5 +1,7 @@
-use std::ops::{Add, Mul};
+use std::ops::{Add, ControlFlow, Mul};
 use anyhow::*;
+use grid::Grid;
+use itertools::Itertools;
 use nom::bytes::complete::tag;
 use nom::character::complete::{char, digit1, line_ending};
 use nom::combinator::{all_consuming, map, map_res, opt, recognize};
@@ -155,8 +157,55 @@ fn part1_with_grid_size(input: &str, grid_row_len: u64, grid_col_len: u64) -> Re
 }
 
 pub fn part2(input: &str) -> Result<u64> {
-	let _ = input;
-	Ok(0)
+	let robots = parse(input);
+	const GRID_ROW_LEN: u64 = 101;
+	const GRID_COL_LEN: u64 = 103;
+
+	const RUN_LEN_REQUIRED: u64 = 10;
+
+	let tree_time = (0..).try_for_each(|time: u64| {
+		let mut grid: Grid<_> = Grid::init(GRID_COL_LEN as usize, GRID_ROW_LEN as usize, false);
+
+		robots.iter().for_each(|robot| {
+			let distance_travelled = robot.vel * time;
+			let new_position = distance_travelled + robot.pos.into();
+			let normalized_position = NormalizedPosition {
+				x: new_position.x.rem_euclid(GRID_ROW_LEN as i64) as u64,
+				y: new_position.y.rem_euclid(GRID_COL_LEN as i64) as u64,
+			};
+			*grid.get_mut(normalized_position.y, normalized_position.x).unwrap() = true;
+		});
+
+		
+		let long_run_found = grid.iter_rows().map(|row| {
+			let mut longest_run = 0;
+			let mut curr_run = 0;
+			row.for_each(|&cell| {
+				if cell {
+					curr_run += 1;
+					if curr_run > longest_run {
+						longest_run = curr_run;
+					}
+				} else {
+					curr_run = 0;
+				}
+			});
+			longest_run
+		}).any(|run| run > RUN_LEN_REQUIRED);
+		if long_run_found {
+			// println!("time t={:?}", time);
+			// grid.iter_rows().for_each(|row| {
+			// 	println!("{}", row.map(|&cell| if cell { '█' } else { ' ' }).join(" "));
+			// });
+			// println!();
+
+			ControlFlow::Break(time)
+		} else {
+			ControlFlow::Continue(())
+		}
+	});
+
+	Ok(tree_time.break_value().unwrap())
 }
 
 #[cfg(test)]
@@ -180,14 +229,8 @@ p=9,5 v=-3,-3";
 	const TEST_GRID_COL_LEN: u64 = 11;
 
 	#[test]
-	fn test_part_one() -> Result<()> {
+	fn test_small_grid() -> Result<()> {
 		assert_eq!(12, part1_with_grid_size(TEST, TEST_GRID_ROW_LEN, TEST_GRID_COL_LEN)?);
-		Ok(())
-	}
-
-	#[test]
-	fn test_part_two() -> Result<()> {
-		assert_eq!(0, part2(TEST)?);
 		Ok(())
 	}
 }
