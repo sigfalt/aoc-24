@@ -10,6 +10,7 @@ nom = "7.1"
 # Additional recommended dependencies
 ahash = "0.8"
 grid = "0.15"
+num = "0.4"
 itertools = "0.13"
 
 [dev-dependencies]

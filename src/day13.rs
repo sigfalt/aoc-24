@@ -1,12 +1,12 @@
-use std::ops::{ControlFlow, Div, Mul, Rem, Sub};
+use std::ops::{Add, ControlFlow, Div, Mul, Rem, Sub};
 use anyhow::*;
-use itertools::Itertools;
 use nom::bytes::complete::tag;
 use nom::character::complete::{digit1, line_ending, one_of};
 use nom::combinator::{all_consuming, map, map_res, opt};
 use nom::{Finish, IResult};
 use nom::multi::separated_list1;
 use nom::sequence::{preceded, separated_pair, terminated, tuple};
+use num::Integer;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct ButtonDelta {
@@ -58,6 +58,16 @@ impl Mul<&u64> for &ButtonDelta {
 struct PrizeLocation {
 	x: u64,
 	y: u64,
+}
+impl Add<u64> for PrizeLocation {
+	type Output = PrizeLocation;
+
+	fn add(self, rhs: u64) -> Self::Output {
+		Self::Output {
+			x: self.x + rhs,
+			y: self.y + rhs
+		}
+	}
 }
 impl Div<ButtonDelta> for PrizeLocation {
 	type Output = (u64, u64);
@@ -168,8 +178,52 @@ pub fn part1(input: &str) -> Result<u64> {
 }
 
 pub fn part2(input: &str) -> Result<u64> {
-	let _ = input;
-	Ok(0)
+	let claw_machines = parse(input);
+
+	const A_COST: i64 = 3;
+	const B_COST: i64 = 1;
+
+	let all_min_costs = claw_machines.into_iter().map(|claw_machine| ClawMachine {
+		prize: claw_machine.prize + 10000000000000,
+		..claw_machine
+	}).filter_map(|claw_machine| {
+		let ClawMachine {
+			a: ButtonDelta { x: ax, y: ay },
+			b: ButtonDelta { x: bx, y: by },
+			prize: PrizeLocation { x: px, y: py }
+		} = claw_machine;
+		let (ax, ay, bx, by, px, py) = (ax as i64, ay as i64, bx as i64, by as i64, px as i64, py as i64);
+
+		let x_gcd = ax.gcd(&bx);
+		let y_gcd = ay.gcd(&by);
+
+		if px as u64 % x_gcd as u64 != 0 || py as u64 % y_gcd as u64 != 0  {
+			return None;
+		}
+
+		let a_dividend = (by * px) - (bx * py);
+		let a_divisor = (ax * by) - (ay * bx);
+		let a_rem = a_dividend % a_divisor;
+		if a_rem != 0 {
+			return None;
+		}
+
+		let a_presses = ((by * px) - (bx * py)) / ((ax * by) - (ay * bx));
+		let b_dividend = px - (ax * a_presses);
+		let b_rem = b_dividend % bx;
+		if b_rem != 0 {
+			return None;
+		}
+
+		let b_presses = b_dividend / bx;
+		if a_presses < 0 || b_presses < 0 {
+			None
+		} else {
+			Some(((a_presses * A_COST) + (b_presses * B_COST)) as u64)
+		}
+	}).sum();
+
+	Ok(all_min_costs)
 }
 
 #[cfg(test)]
@@ -195,12 +249,6 @@ Prize: X=18641, Y=10279";
 	#[test]
 	fn test_part_one() -> Result<()> {
 		assert_eq!(480, part1(TEST)?);
-		Ok(())
-	}
-
-	#[test]
-	fn test_part_two() -> Result<()> {
-		assert_eq!(0, part2(TEST)?);
 		Ok(())
 	}
 }
