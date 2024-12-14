@@ -1,7 +1,6 @@
 use std::ops::{Add, ControlFlow, Mul};
 use anyhow::*;
 use grid::Grid;
-use itertools::Itertools;
 use nom::bytes::complete::tag;
 use nom::character::complete::{char, digit1, line_ending};
 use nom::combinator::{all_consuming, map, map_res, opt, recognize};
