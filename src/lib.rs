@@ -16,6 +16,7 @@ pub mod day12;
 pub mod day13;
 pub mod day14;
 pub mod day15;
+pub mod day16;
 
 pub fn start_day(day: &str) -> Result<String> {
 	println!("Advent of Code 2024 - Day {:0>2}", day);
