@@ -1,3 +1,4 @@
+use std::ops::ControlFlow;
 use ahash::AHashMap;
 use anyhow::*;
 use itertools::Itertools;
@@ -168,30 +169,123 @@ pub fn part1(input: &str) -> Result<String> {
 	Ok(output.into_iter().join(",").to_string())
 }
 
-pub fn part2(input: &str) -> Result<u64> {
-	let _ = input;
-	Ok(0)
+// wow I totally misjudged where part 2 would go...
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
+struct ComputerState {
+	reg_a: usize,
+	reg_b: usize,
+	reg_c: usize,
+	inst_ptr: usize,
+	output: Vec<usize>
+}
+impl ComputerState {
+	pub fn read_register(&self, register: Register) -> usize {
+		match register {
+			Register::A => self.reg_a,
+			Register::B => self.reg_b,
+			Register::C => self.reg_c,
+			Register::IP => self.inst_ptr,
+			Register::OUT => unreachable!("OUT register not used in part 2")
+		}
+	}
+}
+
+pub fn part2(input: &str) -> Result<usize> {
+	let (init_registers, program_memory) = parse(input);
+
+	let mut orig_state = ComputerState::default();
+	init_registers.into_iter().for_each(|(register, value)| {
+		match register {
+			Register::B => orig_state.reg_b = value,
+			Register::C => orig_state.reg_c = value,
+			_ => {}
+		}
+	});
+
+	let parse_combo = |operand: usize, state: &ComputerState| -> usize {
+		match Operand::parse_combo(operand).unwrap() {
+			Operand::Literal(operand) => operand,
+			Operand::Register(register) => state.read_register(register)
+		}
+	};
+
+	// let mut best_output = 0;
+
+	// println!("goal output: {:?}", program_memory);
+	let found_value = (0..).flat_map(|val| [(val << 33) + 0o132621633, (val << 33) + 0o132621635]).try_for_each(|a_reg_init_val| {
+		let mut state = orig_state.clone();
+		state.reg_a = a_reg_init_val;
+
+		while let Some(&instruction) = program_memory.get(state.inst_ptr) {
+			let opcode = Opcode::try_parse(instruction).unwrap();
+			let operand = program_memory[state.inst_ptr + 1];
+
+			let mut jumped = false;
+			match opcode {
+				Opcode::Adv => { state.reg_a = state.reg_a / 2usize.pow(parse_combo(operand, &state) as u32); }
+				Opcode::Bxl => { state.reg_b = state.reg_b ^ operand; }
+				Opcode::Bst => { state.reg_b = parse_combo(operand, &state) % 8; }
+				Opcode::Jnz => {
+					if state.reg_a != 0 {
+						state.inst_ptr = operand;
+						jumped = true;
+					}
+				}
+				Opcode::Bxc => { state.reg_b = state.reg_b ^ state.reg_c; }
+				Opcode::Out => {
+					let next_output = parse_combo(operand, &state) % 8;
+					// outputting a value cannot be undone or modified
+					// if next value to output does not match what we want to see output next,
+					// we can stop testing for this initial value of the A register
+					if Some(&next_output) != program_memory.get(state.output.len()) {
+						break;
+					}
+					state.output.push(next_output);
+					// if state.output.len() > 11 {
+					// 	best_output = state.output.len();
+					// 	println!("A(0o{:o}) output: {:?}", a_reg_init_val, state.output);
+					// }
+				}
+				Opcode::Bdv => { state.reg_b = state.reg_a / 2usize.pow(parse_combo(operand, &state) as u32); }
+				Opcode::Cdv => { state.reg_c = state.reg_a / 2usize.pow(parse_combo(operand, &state) as u32); }
+			}
+
+			if !jumped { state.inst_ptr += 2; }
+		}
+
+		// println!("A({:?}) -> {:?}", a_reg_init_val, state.output);
+		if state.output == program_memory {
+			ControlFlow::Break(a_reg_init_val)
+		} else {
+			ControlFlow::Continue(())
+		}
+	});
+
+	Ok(found_value.break_value().unwrap())
 }
 
 #[cfg(test)]
 mod tests {
 	use crate::day17::*;
 
-	const TEST: &str = "Register A: 729
+	#[test]
+	fn test_part_one() -> Result<()> {
+		assert_eq!("4,6,3,5,6,3,5,2,1,0", part1("Register A: 729
 Register B: 0
 Register C: 0
 
-Program: 0,1,5,4,3,0";
-
-	#[test]
-	fn test_part_one() -> Result<()> {
-		assert_eq!("4,6,3,5,6,3,5,2,1,0", part1(TEST)?);
+Program: 0,1,5,4,3,0")?);
 		Ok(())
 	}
 
 	#[test]
 	fn test_part_two() -> Result<()> {
-		assert_eq!(0, part2(TEST)?);
+		assert_eq!(117440, part2("Register A: 2024
+Register B: 0
+Register C: 0
+
+Program: 0,3,5,4,3,0")?);
 		Ok(())
 	}
 }
