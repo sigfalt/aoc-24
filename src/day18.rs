@@ -1,6 +1,8 @@
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use std::collections::hash_map::Entry;
+use std::fmt::{Display, Formatter};
+use std::ops::ControlFlow;
 use ahash::AHashMap;
 use anyhow::*;
 use grid::Grid;
@@ -45,9 +47,19 @@ impl Direction {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-struct BytePos {
+pub struct BytePos {
 	row: usize,
 	col: usize
+}
+impl Display for BytePos {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		write!(f, "{},{}", self.row, self.col)
+	}
+}
+impl From<(usize, usize)> for BytePos {
+	fn from((row, col): (usize, usize)) -> Self {
+		Self { row, col }
+	}
 }
 
 fn parse_usize(input: &str) -> IResult<&str, usize> {
@@ -174,9 +186,94 @@ fn part1_steps_req((grid_rows, grid_cols): (usize, usize), bytes: impl IntoItera
 	bail!("No path found?!")
 }
 
-pub fn part2(input: &str) -> Result<u64> {
-	let _ = input;
-	Ok(0)
+pub fn part2(input: &str) -> Result<BytePos> {
+	let bytes = parse(input);
+
+	part2_blocking_byte((71, 71), bytes)
+}
+
+fn part2_blocking_byte((grid_rows, grid_cols): (usize, usize), bytes: impl IntoIterator<Item = BytePos>) -> Result<BytePos> {
+	let mut grid = Grid::init(grid_rows, grid_cols, MapCell::Empty);
+
+	let (end_row, end_col) = (grid_rows as isize - 1, grid_cols as isize - 1);
+	let taxicab_distance = |(curr_row, curr_col): (isize, isize)| {
+		(curr_row.abs_diff(end_row) + curr_col.abs_diff(end_col)) as u64
+	};
+
+	let first_blocking_byte = bytes.into_iter().try_for_each(|next_byte| {
+		let BytePos { row: byte_row, col: byte_col } = next_byte;
+		if let Some(grid_cell) = grid.get_mut(byte_row, byte_col) {
+			*grid_cell = MapCell::Corrupted;
+		}
+
+		let mut queue = BinaryHeap::new();
+		let mut weights = AHashMap::new();
+		weights.insert((0, 0), 0);
+		queue.push(SearchNode {
+			est_cost: taxicab_distance((0, 0)),
+			real_cost: 0,
+			pos: (0, 0),
+		});
+
+		let mut path_found = false;
+		while let Some(SearchNode { real_cost, pos: curr_pos, .. }) = queue.pop() {
+			if curr_pos == (end_row, end_col) {
+				path_found = true;
+				break;
+			}
+			// may insert same node multiple times, skip if already seen with lower cost
+			if let Some(&prev_cost) = weights.get(&curr_pos) {
+				if real_cost > prev_cost {
+					continue;
+				}
+			}
+			let successors = {
+				// can move in any direction that is not occupied by a corrupted byte
+				Direction::values().into_iter().filter_map(|dir| {
+					let (next_row, next_col) = dir.offset_from(curr_pos).unwrap();
+					if let Some(&next_cell) = grid.get(next_row, next_col) {
+						if next_cell != MapCell::Corrupted {
+							Some(((next_row, next_col), real_cost + 1))
+						} else {
+							None
+						}
+					} else {
+						None
+					}
+				})
+			};
+			let _ = successors.into_iter().for_each(|(next_pos, next_cost)| {
+				match weights.entry(next_pos) {
+					Entry::Vacant(e) => {
+						e.insert(next_cost);
+						queue.push(SearchNode {
+							est_cost: next_cost + taxicab_distance(next_pos),
+							real_cost: next_cost,
+							pos: next_pos,
+						});
+					},
+					Entry::Occupied(mut e) => {
+						if next_cost < *e.get() {
+							e.insert(next_cost);
+							queue.push(SearchNode {
+								est_cost: next_cost + taxicab_distance(next_pos),
+								real_cost: next_cost,
+								pos: next_pos,
+							});
+						}
+					}
+				};
+			});
+		}
+
+		if path_found {
+			ControlFlow::Continue(())
+		} else {
+			ControlFlow::Break(next_byte)
+		}
+	});
+
+	Ok(first_blocking_byte.break_value().unwrap())
 }
 
 #[cfg(test)]
@@ -217,7 +314,7 @@ mod tests {
 
 	#[test]
 	fn test_part_two() -> Result<()> {
-		assert_eq!(0, part2(TEST)?);
+		assert_eq!(BytePos::from((6, 1)), part2_blocking_byte((7, 7), parse(TEST).into_iter())?);
 		Ok(())
 	}
 }
