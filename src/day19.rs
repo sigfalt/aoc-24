@@ -1,6 +1,7 @@
 use std::fmt::{Display, Formatter};
 use ahash::AHashMap;
 use anyhow::*;
+use itertools::Itertools;
 use nom::bytes::complete::tag;
 use nom::character::complete::{line_ending, one_of};
 use nom::combinator::{all_consuming, map, map_res};
@@ -102,8 +103,47 @@ pub fn part1(input: &str) -> Result<u64> {
 }
 
 pub fn part2(input: &str) -> Result<u64> {
-	let _ = input;
-	Ok(0)
+	let (mut available_patterns, goal_patterns) = parse(input);
+
+	available_patterns.sort_by_cached_key(|t| t.stripes.len());
+	let available_patterns = available_patterns;
+
+	let mut solved_patterns = AHashMap::new();
+
+	let mut calculate_and_cache = |towel: Towel| -> u64 {
+		fn rec(towel: Towel, mut solved_patterns: &mut AHashMap<Towel, u64>, base_patterns: &Vec<Towel>) -> Option<u64> {
+			if !solved_patterns.contains_key(&towel) {
+				let possibilities = base_patterns.iter().filter_map(|base_towel| {
+					if *base_towel == towel {
+						Some(1)
+					} else if base_towel.stripes.len() < towel.stripes.len() {
+						if base_towel.stripes.iter().zip(towel.stripes.iter()).all(|(s1, s2)| s1 == s2) {
+							rec(Towel {
+								stripes: towel.stripes.iter().skip(base_towel.stripes.len()).cloned().collect_vec(),
+							}, &mut solved_patterns, base_patterns)
+						} else {
+							None
+						}
+					} else {
+						None
+					}
+				}).sum();
+
+				solved_patterns.insert(towel.clone(), possibilities);
+			}
+
+			solved_patterns.get(&towel).cloned()
+		}
+
+		rec(towel, &mut solved_patterns, &available_patterns).unwrap_or_default()
+	};
+
+	let found_goals = goal_patterns.into_iter().fold(0, |sum, goal_towel| {
+		let result = calculate_and_cache(goal_towel);
+		sum + result
+	});
+
+	Ok(found_goals)
 }
 
 #[cfg(test)]
@@ -129,7 +169,7 @@ bbrgwb";
 
 	#[test]
 	fn test_part_two() -> Result<()> {
-		assert_eq!(0, part2(TEST)?);
+		assert_eq!(16, part2(TEST)?);
 		Ok(())
 	}
 }
