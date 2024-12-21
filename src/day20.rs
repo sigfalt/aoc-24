@@ -152,9 +152,77 @@ pub fn part1_with_savings(input: &str, min_savings: usize) -> Result<usize> {
 	Ok(all_skip_lens.filter(|&skip_savings| skip_savings >= min_savings).count())
 }
 
-pub fn part2(input: &str) -> Result<u64> {
-	let _ = input;
-	Ok(0)
+pub fn part2(input: &str) -> Result<usize> {
+	part2_with_cheat_len_and_savings_min(input, 20, 100)
+}
+
+pub fn part2_with_cheat_len_and_savings_min(input: &str, max_cheat: usize, min_savings: usize) -> Result<usize> {
+	let map: Grid<_> = parse(input).into();
+	let start_pos = map.indexed_iter().find_map(|((row, col), &cell)| {
+		if cell == MapCell::Start {
+			Some((row as isize, col as isize))
+		} else {
+			None
+		}
+	}).unwrap();
+
+	// map is supposed to represent a racecourse
+	// assume map only has one path from start to finish, with no branches/dead ends
+	// starting from the start and simply not proceeding backwards should find the path from start to end
+	let mut course = Vec::from([start_pos]);
+	let mut backwards = None;
+	let mut curr_pos = start_pos;
+	while map.get(curr_pos.0, curr_pos.1).unwrap() != &MapCell::End {
+		let mut to_check = Direction::values().into_iter().filter_map(|dir| {
+			if let Some(backwards) = backwards {
+				if backwards != dir {
+					Some((dir, dir.offset_from(curr_pos).unwrap()))
+				} else {
+					None
+				}
+			} else {
+				Some((dir, dir.offset_from(curr_pos).unwrap()))
+			}
+		});
+		let (next_dir, next_pos) = to_check.find(|&(_, (row_to_check, col_to_check))|
+			map.get(row_to_check, col_to_check).unwrap() != &MapCell::Wall
+		).unwrap();
+
+		course.push(next_pos);
+		backwards = Some(next_dir.opposite());
+		curr_pos = next_pos;
+	}
+
+	let mut time_map = Grid::init(map.rows(), map.cols(), None);
+	course.iter().enumerate().for_each(|(time, &(row, col))| {
+		*time_map.get_mut(row, col).unwrap() = Some(time);
+	});
+
+	let taxicab_distance = |(curr_row, curr_col): (isize, isize), (target_row, target_col): (isize, isize)| {
+		curr_row.abs_diff(target_row) + curr_col.abs_diff(target_col)
+	};
+
+	let all_skip_lens = course.iter().enumerate().flat_map(|(start_time, &(row, col))| {
+		// a cheat is defined by its start and end points
+		// the specific path taken during the cheat is not important,
+		// so long as we can reach the end point in the time allowed
+		let good_destinations = course.iter().enumerate().rev().take_while(move |&(end_time, _)|
+			// skip locations that cannot save enough time anyway
+			end_time - start_time >= min_savings
+		);
+
+		// can we cheat to the destination? if so, how much time do we save?
+		good_destinations.filter_map(move |(end_time, &(end_row, end_col))| {
+			let cheat_distance = taxicab_distance((row, col), (end_row, end_col));
+			if cheat_distance <= max_cheat && start_time + cheat_distance <= end_time {
+				Some(end_time - start_time - cheat_distance)
+			} else {
+				None
+			}
+		})
+	});
+
+	Ok(all_skip_lens.filter(|&skip_savings: &usize| skip_savings >= min_savings).count())
 }
 
 #[cfg(test)]
@@ -185,7 +253,7 @@ mod tests {
 
 	#[test]
 	fn test_part_two() -> Result<()> {
-		assert_eq!(0, part2(TEST)?);
+		assert_eq!(7, part2_with_cheat_len_and_savings_min(TEST, 20, 74)?);
 		Ok(())
 	}
 }
