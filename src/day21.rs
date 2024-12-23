@@ -246,6 +246,10 @@ impl MovementDirection {
 }
 
 pub fn part1(input: &str) -> Result<u64> {
+	solve(input, 3)
+}
+
+fn solve(input: &str, robot_chain_len: u64) -> Result<u64> {
 	let input_codes = parse(input);
 
 	let mut cost_cache: AHashMap<(DirectionalKeypad, DirectionalKeypad, u64), u64> = AHashMap::new();
@@ -266,33 +270,28 @@ pub fn part1(input: &str) -> Result<u64> {
 						.fold((0, DirectionalKeypad::default()), |(sum, prev_btn), next_btn| {
 							// the cost of a set of moves is the cost of each individual move, summed together
 							(sum + rec(&prev_btn, &next_btn, depth - 1, cache), next_btn)
-					});
+						});
 					cost
 				});
 				// find the moveset with the lowest cost
 				let min_cost = moveset_cost.min().unwrap();
-				// println!("recursed for {:?} value {:?}", (*prev_button, *next_button, depth), min_cost);
 				min_cost
 			};
 			cache.insert((*prev_button, *next_button, depth), cost);
 
 			cost
 		}
-
-		// println!("get cost for moving from {:?} to {:?}", prev_button, next_button);
 		rec(prev_button, next_button, depth, &mut cost_cache)
 	};
-
-	const MAX_DEPTH: u64 = 3;
 
 	let complexities = input_codes.into_iter().map(|input_code| {
 		// each input code is a sequence of numeric keypad presses we need to input, but indirectly
 		//
-		// we enter key presses on a directional keypad, which go through two levels of directional
-		// keypad indirection, and finally to the numeric keypad
+		// we enter key presses on a directional keypad, which go through a variable number of levels
+		// of directional keypad indirection, and finally to the numeric keypad
 		//
-		// put in reverse, the numeric key presses need to be used to determine three levels
-		// of indirect directional key presses
+		// put in reverse, the numeric key presses need to be used to determine whatever number of
+		// levels of indirect directional key presses
 		let numeric_code = input_code.iter().fold(0, |accum, &digit| {
 			if let Result::Ok(digit) = u64::try_from(digit) {
 				(accum * 10) + digit
@@ -300,14 +299,13 @@ pub fn part1(input: &str) -> Result<u64> {
 				accum
 			}
 		});
-		// println!("numeric_code {numeric_code:?}");
 
 		let (input_min_cost, _) = input_code.into_iter().fold((0, NumericKeypad::default()), |(cost, prev_button), next_button| {
 			let possible_movesets = prev_button.move_to(&next_button);
 			let moveset_cost = possible_movesets.into_iter().map(|moveset| {
 				let (cost, _) = moveset.into_iter().map(DirectionalKeypad::from).chain(once(DirectionalKeypad::Activate))
 					.fold((0, DirectionalKeypad::default()), |(sum, prev_btn), next_btn| {
-						(sum + get_cost(&prev_btn, &next_btn, MAX_DEPTH - 1), next_btn)
+						(sum + get_cost(&prev_btn, &next_btn, robot_chain_len - 1), next_btn)
 					});
 				cost
 			});
@@ -315,7 +313,6 @@ pub fn part1(input: &str) -> Result<u64> {
 
 			(cost + min_cost, next_button)
 		});
-		// println!("input_min_cost {input_min_cost:?}");
 
 		input_min_cost * numeric_code
 	});
@@ -324,8 +321,7 @@ pub fn part1(input: &str) -> Result<u64> {
 }
 
 pub fn part2(input: &str) -> Result<u64> {
-	let _ = input;
-	Ok(0)
+	solve(input, 26)
 }
 
 #[cfg(test)]
@@ -339,14 +335,8 @@ mod tests {
 379A";
 
 	#[test]
-	fn test_part_one() -> Result<()> {
+	fn test() -> Result<()> {
 		assert_eq!(126384, part1(TEST)?);
-		Ok(())
-	}
-
-	#[test]
-	fn test_part_two() -> Result<()> {
-		assert_eq!(0, part2(TEST)?);
 		Ok(())
 	}
 }
